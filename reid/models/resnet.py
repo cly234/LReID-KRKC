@@ -208,7 +208,7 @@ def build_resnet_backbone(num_class, depth, pretrain=True):
 
     model = ResNet(1, 'BN', False, False, block, num_class, num_blocks_per_stage)
     if pretrain:
-        cached_file = '/public/home/yuchl/.cache/torch/checkpoints/resnet50-19c8e357.pth'
+        cached_file = '/$ROOT/.cache/torch/checkpoints/resnet50-19c8e357.pth'
         state_dict = torch.load(cached_file)
         model.load_state_dict(state_dict, strict=False)
 

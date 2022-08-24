@@ -8,6 +8,7 @@ from .data.sampler import RandomIdentitySampler, MultiDomainRandomIdentitySample
 
 import collections
 import numpy as np
+import copy
 
 def extract_features(model, data_loader):
     features_all = []
@@ -158,20 +159,36 @@ def select_replay_samples(model, dataset, training_phase=0, add_num=0, old_datas
     return data_loader_replay, replay_data
 
 
-def get_pseudo_features(data_specific_batch_norm, training_phase, x, domain, unchange=False):
-    fake_feat_list = []
-    if unchange is False:
-        for i in range(training_phase):
-            if int(domain[0]) == i:
-                data_specific_batch_norm[i].train()
-                fake_feat_list.append(data_specific_batch_norm[i](x)[..., 0, 0])
+def eval_func(epoch, evaluator, model, test_loader, name, old_model=None):
+    evaluator_fuse = copy.deepcopy(evaluator)
+    evaluator.reset()
+    evaluator_fuse.reset()
+    model.eval()
+    if old_model is not None:
+        old_model.eval()
+    device = 'cuda'
+    pid_list = []
+    for n_iter, (imgs, fnames, pids, cids, domians) in enumerate(test_loader):
+        with torch.no_grad():
+            pid_list.append(pids)
+            imgs = imgs.to(device)
+            cids = cids.to(device)
+            feat = model(imgs)
+            if old_model is not None:
+                old_feat = old_model(imgs)
+                fuse_feat = torch.cat([feat, old_feat], dim=1)
+                evaluator_fuse.update((fuse_feat, pids, cids))
             else:
-                data_specific_batch_norm[i].eval()
-                fake_feat_list.append(data_specific_batch_norm[i](x)[..., 0, 0])
-                data_specific_batch_norm[i].train()
+                evaluator.update((feat, pids, cids))
+    if old_model is not None:
+        cmc, mAP, _, _, _, _, _ = evaluator_fuse.compute()
     else:
-        for i in range(training_phase):
-            data_specific_batch_norm[i].eval()
-            fake_feat_list.append(data_specific_batch_norm[i](x)[..., 0, 0])
+        cmc, mAP, _, _, _, _, _ = evaluator.compute()
+  
+    print("Validation Results - Epoch: {}".format(epoch))
+    print("mAP_{}: {:.1%}".format(name, mAP))
+    for r in [1, 5, 10]:
+        print("CMC curve, Rank-{:<3}:{:.1%}".format(r, cmc[r - 1]))
+    torch.cuda.empty_cache()
 
-    return fake_feat_list
+    return cmc, mAP

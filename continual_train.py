@@ -23,39 +23,7 @@ from reid.trainer import Trainer
 from torch.nn.parallel import DistributedDataParallel
 import copy
 
-def eval_func(epoch, evaluator, model, test_loader, name, old_model=None):
-    evaluator_fuse = copy.deepcopy(evaluator)
-    evaluator.reset()
-    evaluator_fuse.reset()
-    model.eval()
-    if old_model is not None:
-        old_model.eval()
-    device = 'cuda'
-    pid_list = []
-    for n_iter, (imgs, fnames, pids, cids, domians) in enumerate(test_loader):
-        with torch.no_grad():
-            pid_list.append(pids)
-            imgs = imgs.to(device)
-            cids = cids.to(device)
-            feat = model(imgs)
-            if old_model is not None:
-                old_feat = old_model(imgs)
-                fuse_feat = torch.cat([feat, old_feat], dim=1)
-                evaluator_fuse.update((fuse_feat, pids, cids))
-            else:
-                evaluator.update((feat, pids, cids))
-    if old_model is not None:
-        cmc, mAP, _, _, _, _, _ = evaluator_fuse.compute()
-    else:
-        cmc, mAP, _, _, _, _, _ = evaluator.compute()
-  
-    print("Validation Results - Epoch: {}".format(epoch))
-    print("mAP_{}: {:.1%}".format(name, mAP))
-    for r in [1, 5, 10]:
-        print("CMC curve, Rank-{:<3}:{:.1%}".format(r, cmc[r - 1]))
-    torch.cuda.empty_cache()
 
-    return cmc, mAP
 
 def get_data(name, data_dir, height, width, batch_size, workers, num_instances):
     root = osp.join(data_dir, name)
@@ -204,7 +172,7 @@ def main_worker(args):
             save_checkpoint({
                 'state_dict': model.state_dict(),
                 'epoch': epoch + 1,
-                'mAP': mAP,
+                'mAP': mAP_viper,
             }, True, fpath=osp.join(args.logs_dir, 'viper_checkpoint.pth.tar'))
 
             print('Finished epoch {:3d}  VIPeR mAP: {:5.1%} '.format(epoch, mAP_viper))
@@ -229,10 +197,9 @@ def main_worker(args):
 
     num_query = len(dataset_market.query)
     evaluator_market = R1_mAP_eval(num_query, max_rank=50, feat_norm=True)
-    evaluator_viper = R1_mAP_eval(len(dataset_viper.query), max_rank=50, feat_norm=True)
-    evaluators = [evaluator_viper, evaluator_market]
-    names = ['viper', 'market']
-    test_loaders = [test_loader_viper, test_loader_market]
+    evaluators.append(evaluator_market)
+    names.append('market')
+    test_loaders.append(test_loader_market)
  
     # Re-initialize optimizer
     params = []
@@ -275,7 +242,7 @@ def main_worker(args):
     # Select replay data of market-1501
     replay_dataloader, market_replay_dataset = select_replay_samples(model, dataset_market, training_phase=2,
                                                   add_num=num_classes_viper, old_datas=viper_replay_dataset)
-
+    #model space consolidation
     model = model.module
     old_model = old_model.module
     alpha = 1/2
@@ -308,11 +275,6 @@ def main_worker(args):
     old_model = old_model.cuda()
     old_model.train()
     
-    evaluator_cuhksysu_norm = R1_mAP_eval(len(dataset_cuhksysu.query), max_rank=50, feat_norm=True)
-    #evaluator_cuhksysu = R1_mAP_eval(len(dataset_cuhksysu.query), max_rank=50, feat_norm=False)
-    test_loaders.append(test_loader_cuhksysu) 
-    evaluators.append(evaluator_cuhksysu_norm)
-    names.append('cuhksysu_norm')
     # Re-initialize optimizer
     params = []
     for key, value in model.named_params(model):
@@ -341,8 +303,10 @@ def main_worker(args):
         lr_scheduler.step()
         old_lr_scheduler.step()
 
-        if (epoch == 0 or epoch ==1 or epoch == args.epochs-1):
-
+        if (epoch == args.epochs-1):
+            test_loaders.append(test_loader_cuhksysu) 
+            evaluators.append(R1_mAP_eval(len(dataset_cuhksysu.query), max_rank=50, feat_norm=True))
+            names.append('cuhksysu')
             for evaluator, name, test_loader in zip(evaluators, names, test_loaders):
                 cmc, mAP_cuhk = eval_func(epoch, evaluator, model, test_loader, name, old_model)
             
@@ -351,27 +315,14 @@ def main_worker(args):
                     'state_dict': model.state_dict(),
                     'epoch': epoch + 1,
                     'mAP': mAP_cuhk,
-                }, True, fpath=osp.join(args.logs_dir, 'cuhksysu_checkpoint_bilearn_daxiao.pth.tar'))
+                }, True, fpath=osp.join(args.logs_dir, 'cuhksysu_checkpoint.pth.tar'))
 
             print('Finished epoch {:3d}  CUHKSYSU mAP: {:5.1%}'.format(epoch, mAP_cuhk))
     
     
-    replay_dataloader, cuhksysu_replay_dataset = select_replay_samples(model, dataset_cuhksysu, training_phase=3, 
+    replay_dataloader, cuhksysu_replay_dataset = select_replay_samples(model, dataset_cuhksysu, training_phase=3,\
                                                    add_num=add_num, old_datas=market_replay_dataset)
-
-
-    # Expand the dimension of classifier
-    #org_classifier_params = model.module.classifier.weight.data
-    #model.module.classifier = nn.Linear(2048, num_classes_viper + num_classes_market + num_classes_cuhksysu + num_classes_msmt17, bias=False)
-    #model.module.classifier.weight.data[:(num_classes_viper + num_classes_market + num_classes_cuhksysu)].copy_(org_classifier_params)
-    #odel.cuda()
-    #add_num = num_classes_market + num_classes_viper + num_classes_cuhksysu
-
-    # Initialize classifer with class centers
-    #class_centers = initial_classifier(model, init_loader_msmt17)
-    #model.module.classifier.weight.data[(num_classes_market + num_classes_viper +num_classes_cuhksysu):].copy_(class_centers)
-    #model.cuda()
-
+    #model space consolidation
     model = model.module
     old_model = old_model.module
     alpha = 1/3
@@ -403,10 +354,6 @@ def main_worker(args):
     old_model.train()
     model.train()
 
-    #evaluators.extend([R1_mAP_eval(len(dataset_msmt17.query), max_rank=50, feat_norm=True)])
-    #names.extend(["msmt17_norm"])
-    test_loaders.extend([test_loader_msmt17])
-
     # Re-initialize optimizer
     params = []
     for key, value in model.named_params(model):
@@ -435,21 +382,18 @@ def main_worker(args):
                       train_iters=len(train_loader_msmt17), add_num=add_num, old_model=old_model, replay=True)
         lr_scheduler.step()
         old_lr_scheduler.step()
-
-        if (epoch == 0 or epoch ==1):
-            for evaluator, name, test_loader in zip(evaluators, names, test_loaders):
-                cmc, mAP_msmt = eval_func(epoch, evaluator, model, test_loader, name, old_model)
             
         if epoch == args.epochs - 1:
-            evaluators.extend([R1_mAP_eval(len(dataset_msmt17.query), max_rank=50, feat_norm=True)])
-            names.extend(["msmt17_norm"])
+            evaluators.append(R1_mAP_eval(len(dataset_msmt17.query), max_rank=50, feat_norm=True))
+            names.append("msmt17_norm")
+            test_loaders.append(test_loader_msmt17)
             for evaluator, name, test_loader in zip(evaluators, names, test_loaders):
                 cmc, mAP_msmt = eval_func(epoch, evaluator, model, test_loader, name, old_model)
             save_checkpoint({
                 'state_dict': model.state_dict(),
                 'epoch': epoch + 1,
                 'mAP': mAP_msmt,
-            }, True, fpath=osp.join(args.logs_dir, 'msmt17_checkpoint_bilearn_daxiao.pth.tar'))
+            }, True, fpath=osp.join(args.logs_dir, 'msmt17_checkpoint.pth.tar'))
 
             print('Finished epoch {:3d}  MSMT17 mAP: {:5.1%}'.format(epoch, mAP_msmt))
     
@@ -481,7 +425,7 @@ if __name__ == '__main__':
     parser.add_argument('--milestones', nargs='+', type=int, default=[40, 70],
                         help='milestones for the learning rate decay')
     # training configs
-    parser.add_argument('--resume', type=str, default='/public/home/yuchl/PTKP/logs/viper_checkpoint.pth.tar', metavar='PATH')
+    parser.add_argument('--resume', type=str, default='', metavar='PATH')
     parser.add_argument('--evaluate', action='store_true',
                         help="evaluation only")
     parser.add_argument('--epochs', type=int, default=60)
@@ -492,7 +436,7 @@ if __name__ == '__main__':
     # path
     working_dir = osp.dirname(osp.abspath(__file__))
     parser.add_argument('--data-dir', type=str, metavar='PATH',
-                        default=osp.join('/public/home/yuchl/', 'data'))
+                        default=osp.join('/$ROOT/', 'data'))
     parser.add_argument('--logs-dir', type=str, metavar='PATH',
                         default=osp.join(working_dir, 'logs'))
     parser.add_argument('--rr-gpu', action='store_true',
