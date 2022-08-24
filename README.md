@@ -4,18 +4,18 @@ The code implementation of "Lifelong Person Re-Identification via Knowledge Refr
 $ROOT/LReID-KRKC  
 $ROOT/data  
 ├── market1501  
-&emsp; ├── bounding_box_test  
-&emsp; ...  
+&emsp; &emsp;├── bounding_box_test  
+&emsp; &emsp; ...  
 └── cuhksysu4reid  
-&emsp;├── train  
-         ...  
+&emsp;&emsp; ├── train  
+ &emsp; &emsp; ...  
 └── MSMT17  
- >>├── train  
+ &emsp; &emsp; ├── train  
          ...  
 └── viper  
- >>├── VIPeR    
->>>>├── cam_a  
->>>>├── cam_b  
-         ...  	
+ &emsp; &emsp; ├── VIPeR    
+&emsp; &emsp; &emsp; &emsp; ├── cam_a  
+&emsp; &emsp; &emsp; &emsp; ├── cam_b  
+ &emsp; &emsp; ...  	
 ## Run the Code
 CUDA_VISBILE_DEVICES=0,1,2,3 python continual_train.py
