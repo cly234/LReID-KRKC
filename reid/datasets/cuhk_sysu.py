@@ -15,7 +15,7 @@ class CUHK_SYSU(BaseImageDataset):
 
     """
 
-    dataset_dir = '/public/home/yuchl/data/cuhksysu4reid'
+    dataset_dir = '/$ROOT/data/cuhksysu4reid'
 
     def __init__(self, root, verbose=True, **kwargs):
         super(CUHK_SYSU, self).__init__()

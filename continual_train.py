@@ -24,13 +24,12 @@ from torch.nn.parallel import DistributedDataParallel
 import copy
 
 def eval_func(epoch, evaluator, model, test_loader, name, old_model=None):
-    evaluator_old = copy.deepcopy(evaluator)
-    evaluator_both = copy.deepcopy(evaluator)
+    evaluator_fuse = copy.deepcopy(evaluator)
     evaluator.reset()
-    evaluator_old.reset()
-    evaluator_both.reset()
+    evaluator_fuse.reset()
     model.eval()
-    old_model.eval()
+    if old_model is not None:
+        old_model.eval()
     device = 'cuda'
     pid_list = []
     for n_iter, (imgs, fnames, pids, cids, domians) in enumerate(test_loader):
@@ -41,32 +40,19 @@ def eval_func(epoch, evaluator, model, test_loader, name, old_model=None):
             feat = model(imgs)
             if old_model is not None:
                 old_feat = old_model(imgs)
-                both_feat = torch.cat([feat, old_feat], dim=1)
-
-            evaluator.update((feat, pids, cids))
-            evaluator_old.update((old_feat, pids, cids))
-            evaluator_both.update((both_feat, pids, cids))
-
-    cmc, mAP, _, _, _, _, _ = evaluator.compute()
-    cmc_old, mAP_old, _, _, _, _, _ = evaluator_old.compute()
-    cmc_both, mAP_both, _, _, _, _, _ = evaluator_both.compute()
-
+                fuse_feat = torch.cat([feat, old_feat], dim=1)
+                evaluator_fuse.update((fuse_feat, pids, cids))
+            else:
+                evaluator.update((feat, pids, cids))
+    if old_model is not None:
+        cmc, mAP, _, _, _, _, _ = evaluator_fuse.compute()
+    else:
+        cmc, mAP, _, _, _, _, _ = evaluator.compute()
+  
     print("Validation Results - Epoch: {}".format(epoch))
     print("mAP_{}: {:.1%}".format(name, mAP))
     for r in [1, 5, 10]:
         print("CMC curve, Rank-{:<3}:{:.1%}".format(r, cmc[r - 1]))
-    torch.cuda.empty_cache()
-
-    print("Validation Results - Epoch: {}".format(epoch))
-    print("mAP_{}: {:.1%}".format(name+"old", mAP_old))
-    for r in [1, 5, 10]:
-        print("CMC curve, Rank-{:<3}:{:.1%}".format(r, cmc_old[r - 1]))
-    torch.cuda.empty_cache()
-
-    print("Validation Results - Epoch: {}".format(epoch))
-    print("mAP_{}: {:.1%}".format(name+"both", mAP_both))
-    for r in [1, 5, 10]:
-        print("CMC curve, Rank-{:<3}:{:.1%}".format(r, cmc_both[r - 1]))
     torch.cuda.empty_cache()
 
     return cmc, mAP
@@ -173,28 +159,12 @@ def main_worker(args):
     dataset_market, num_classes_market, train_loader_market, test_loader_market, init_loader_market = \
         get_data('market1501', args.data_dir, args.height, args.width, args.batch_size, args.workers, args.num_instances)
 
-    dataset_prid, num_classes_prid, train_loader_prid, test_loader_prid, init_loader_prid = \
-        get_data('prid', args.data_dir, args.height, args.width, args.batch_size, args.workers, args.num_instances)
-
     dataset_cuhksysu, num_classes_cuhksysu, train_loader_cuhksysu, test_loader_cuhksysu, init_loader_chuksysu = \
         get_data('cuhk_sysu', args.data_dir, args.height, args.width, args.batch_size, args.workers, args.num_instances)
 
     dataset_msmt17, num_classes_msmt17, train_loader_msmt17, test_loader_msmt17, init_loader_msmt17 = \
         get_data('msmt17', args.data_dir, args.height, args.width, args.batch_size, args.workers, args.num_instances)
-    '''
-    # Data loaders for test only
-    dataset_cuhk03, _, _, test_loader_cuhk03, _ = \
-        get_data('cuhk03', args.data_dir, args.height, args.width, args.batch_size, args.workers, args.num_instances)
-    
-    dataset_cuhk01, _, _, test_loader_cuhk01, _ = \
-        get_data('cuhk01', args.data_dir, args.height, args.width, args.batch_size, args.workers, args.num_instances)
-
-    dataset_grid, _, _, test_loader_grid, _ = \
-        get_data('grid', args.data_dir, args.height, args.width, args.batch_size, args.workers, args.num_instances)
-
-    dataset_sense, _, _, test_loader_sense, _ =\
-        get_data('sense', args.data_dir, args.height, args.width, args.batch_size, args.workers, args.num_instances)
-    '''
+   
     # Create model
     model = build_resnet_backbone(num_class=num_classes_viper, depth='50x')
     model.cuda()
@@ -202,7 +172,9 @@ def main_worker(args):
 
     # Evaluator
     start_epoch = 0
-    evaluator = Evaluator(model)
+    evaluators=[R1_mAP_eval(len(dataset_viper.query), max_rank=50, feat_norm=True)]
+    names=['viper']
+    test_loaders=[test_loader_viper]
 
     # Opitimizer initialize
     params = []
@@ -216,7 +188,7 @@ def main_worker(args):
     # Start training
     print('Continual training starts!')
 
-    # Train Market-1501
+    # Train VIPeR
     trainer = Trainer(model, num_classes_viper, margin=args.margin)
     for epoch in range(start_epoch, 60):
 
@@ -226,16 +198,17 @@ def main_worker(args):
         lr_scheduler.step()
 
         if ((epoch + 1) % 60 == 0):
-            _, mAP = evaluator.evaluate(test_loader_viper, dataset_viper.query, dataset_viper.gallery, cmc_flag=True)
+            for evaluator, name, test_loader in zip(evaluators, names, test_loaders):
+                cmc, mAP_viper = eval_func(epoch, evaluator, model, test_loader, name, old_model=None)
 
             save_checkpoint({
                 'state_dict': model.state_dict(),
                 'epoch': epoch + 1,
                 'mAP': mAP,
-            }, True, fpath=osp.join(args.logs_dir, 'viper_checkpoint_v1.pth.tar'))
+            }, True, fpath=osp.join(args.logs_dir, 'viper_checkpoint.pth.tar'))
 
-            print('Finished epoch {:3d}  VIPeR mAP: {:5.1%} '.format(epoch, mAP))
-    # Select replay data of market-1501
+            print('Finished epoch {:3d}  VIPeR mAP: {:5.1%} '.format(epoch, mAP_viper))
+    # Select replay data of viper
     replay_dataloader, viper_replay_dataset = select_replay_samples(model, dataset_viper, training_phase=1)
 
     # Expand the dimension of classifier
@@ -258,24 +231,8 @@ def main_worker(args):
     evaluator_market = R1_mAP_eval(num_query, max_rank=50, feat_norm=True)
     evaluator_viper = R1_mAP_eval(len(dataset_viper.query), max_rank=50, feat_norm=True)
     evaluators = [evaluator_viper, evaluator_market]
-    names = ['viper_norm', 'market_norm']
+    names = ['viper', 'market']
     test_loaders = [test_loader_viper, test_loader_market]
-
-    evaluator_viper.reset()
-    model.eval()
-    device = 'cuda'
-    pid_list = []
-    for n_iter, (imgs, fnames, pids, cids, domians) in enumerate(test_loader_viper):
-        with torch.no_grad():
-            pid_list.append(pids)
-            imgs = imgs.to(device)
-            cids = cids.to(device)
-            feat = model(imgs)
-            evaluator_viper.update((feat, pids, cids))
-
-    cmc, mAP_viper, _, _, _, _, _ = evaluator_viper.compute()
-    print("*******************")
-    print(mAP_viper)
  
     # Re-initialize optimizer
     params = []
@@ -305,16 +262,15 @@ def main_worker(args):
         lr_scheduler.step()
         old_lr_scheduler.step()
 
-        if (epoch == 0 or epoch == 1 or epoch == args.epochs-1):
+        if (epoch == args.epochs-1):
             for evaluator, name, test_loader in zip(evaluators, names, test_loaders):
                 cmc, mAP_market = eval_func(epoch, evaluator, model, test_loader, name, old_model)
-        
-        if epoch==args.epochs - 1:
+
             save_checkpoint({
                 'state_dict': model.state_dict(),
                 'epoch': epoch + 1,
                 'mAP': mAP_market,
-                }, True, fpath=osp.join(args.logs_dir, 'market_checkpoint_bilearn_daxiao.pth.tar'))
+                }, True, fpath=osp.join(args.logs_dir, 'market_checkpoint.pth.tar'))
 
     # Select replay data of market-1501
     replay_dataloader, market_replay_dataset = select_replay_samples(model, dataset_market, training_phase=2,

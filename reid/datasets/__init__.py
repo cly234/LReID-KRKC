@@ -1,27 +1,15 @@
 from __future__ import absolute_import
 import warnings
 
-from .dukemtmc import DukeMTMC
 from .market1501 import Market1501
 from .msmt17 import MSMT17
-from .cuhk03 import CUHK03
-from .cuhk01 import CUHK01
 from .cuhk_sysu import CUHK_SYSU
-from .grid import GRID
-from .sensereid import SenseReID
 from .viper import VIPeR
-from .prid import PRID
 __factory = {
     'market1501': Market1501,
-    'dukemtmc': DukeMTMC,
     'msmt17': MSMT17,
     'cuhk_sysu': CUHK_SYSU,
-    'cuhk03': CUHK03,
-    'cuhk01': CUHK01,
-    'grid': GRID,
-    'sense': SenseReID,
-    'viper': VIPeR,
-    'prid': PRID
+    'viper': VIPeR
 }
 
 

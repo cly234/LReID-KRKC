@@ -27,7 +27,7 @@ def _pluck_msmt(list_file, subdir, pattern=re.compile(r'([-\d]+)_([-\d]+)_([-\d]
 
 class Dataset_MSMT(object):
     def __init__(self, root):
-        dataset_dir = '/public/home/yuchl/data'
+        dataset_dir = '/$ROOT/data'
         self.root = dataset_dir
         self.train, self.val, self.trainval = [], [], []
         self.query, self.gallery = [], []
@@ -38,7 +38,7 @@ class Dataset_MSMT(object):
         return osp.join(self.root, 'MSMT17')
 
     def load(self, verbose=True):
-        exdir = '/public/home/yuchl/data/MSMT17'
+        exdir = '/$ROOT/data/MSMT17'
         self.train, train_pids = _pluck_msmt(osp.join(exdir, 'list_train.txt'), 'train')
         self.val, val_pids = _pluck_msmt(osp.join(exdir, 'list_val.txt'), 'train')
         self.train = self.train + self.val
