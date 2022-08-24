@@ -4,10 +4,10 @@ The code implementation of "Lifelong Person Re-Identification via Knowledge Refr
 $ROOT/LReID-KRKC  
 $ROOT/data  
 ├── market1501  
->>├── bounding_box_test  
-         ...  
+&emsp &emsp├── bounding_box_test  
+&emsp &emsp...  
 └── cuhksysu4reid  
->>├── train  
+&emsp&emsp├── train  
          ...  
 └── MSMT17  
  >>├── train  
