@@ -9,7 +9,6 @@ import torch.nn as nn
 import random
 
 from reid import datasets
-from reid.evaluators import Evaluator
 from reid.utils.metrics import R1_mAP_eval
 from reid.utils.data import IterLoader
 from reid.utils.data.sampler import RandomMultipleGallerySampler
