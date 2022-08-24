@@ -1,6 +1,6 @@
 # LReID-KRKC
 The code implementation of "Lifelong Person Re-Identification via Knowledge Refreshing and Knowledge Consolidation"
-##Prepare Datasets
+## Prepare Datasets
 $ROOT/LReID-KRKC
 $ROOT/data
 ├── market1501
