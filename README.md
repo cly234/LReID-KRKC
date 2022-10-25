@@ -2,7 +2,7 @@
 The code implementation of "Lifelong Person Re-Identification via Knowledge Refreshing and Knowledge Consolidation"
 ## Prepare Datasets
 ```
-$ROOT/data
+data
 ├── market1501
 │   │── bounding_box_test
 │   │── bounding_box_train
