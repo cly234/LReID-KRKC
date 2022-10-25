@@ -10,16 +10,11 @@ from ..utils.osutils import mkdir_if_missing
 from ..utils.serialization import write_json
 
 class CUHK_SYSU(BaseImageDataset):
-    """
 
-
-    """
-
-    dataset_dir = '/$ROOT/data/cuhksysu4reid'
 
     def __init__(self, root, verbose=True, **kwargs):
         super(CUHK_SYSU, self).__init__()
-        self.dataset_dir = osp.join(root, self.dataset_dir)
+        self.dataset_dir = root
         self.train_dir = osp.join(self.dataset_dir, 'train')
         self.query_dir = osp.join(self.dataset_dir, 'query')
         self.gallery_dir = osp.join(self.dataset_dir, 'gallery')

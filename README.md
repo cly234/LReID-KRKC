@@ -22,4 +22,5 @@ data
 │   └── splits.json
 ```  	
 ## Run the Code
-CUDA_VISBILE_DEVICES=0,1,2,3 python continual_train.py
+CUDA_VISBILE_DEVICES=0,1,2,3 python continual_train.py --data-dir=$ROOT
+

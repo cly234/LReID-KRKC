@@ -133,7 +133,7 @@ def main_worker(args):
         get_data('msmt17', args.data_dir, args.height, args.width, args.batch_size, args.workers, args.num_instances)
    
     # Create model
-    model = build_resnet_backbone(num_class=num_classes_viper, depth='50x')
+    model = build_resnet_backbone(num_class=num_classes_viper, depth='50x', root=args.data_dir)
     model.cuda()
     model = DataParallel(model)
 

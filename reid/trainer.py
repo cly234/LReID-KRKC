@@ -2,12 +2,9 @@ from __future__ import print_function, absolute_import
 import time
 
 import torch.nn as nn
-from .loss import TripletLoss, CrossEntropyLabelSmooth, SoftTripletLoss, \
-    CrossEntropyLabelSmooth_weighted, SoftTripletLoss_weight
+from .loss import TripletLoss, CrossEntropyLabelSmooth, SoftTripletLoss
 from .utils.meters import AverageMeter
 from .utils.my_tools import *
-from reid.metric_learning.distance import cosine_similarity, cosine_distance
-import quadprog
 import numpy as np
 from torch.nn import functional as F
 

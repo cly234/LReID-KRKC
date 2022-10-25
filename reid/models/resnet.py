@@ -175,7 +175,7 @@ class ResNet(nn.Module):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
 
-def build_resnet_backbone(num_class, depth, pretrain=True):
+def build_resnet_backbone(num_class, depth, root, pretrain=True):
     """
     Create a ResNet instance from config.
     Returns:
@@ -208,7 +208,7 @@ def build_resnet_backbone(num_class, depth, pretrain=True):
 
     model = ResNet(1, 'BN', False, False, block, num_class, num_blocks_per_stage)
     if pretrain:
-        cached_file = '/$ROOT/.cache/torch/checkpoints/resnet50-19c8e357.pth'
+        cached_file = '/{}/.cache/torch/checkpoints/resnet50-19c8e357.pth'.format(root)
         state_dict = torch.load(cached_file)
         model.load_state_dict(state_dict, strict=False)
 
