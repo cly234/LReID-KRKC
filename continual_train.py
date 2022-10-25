@@ -387,7 +387,7 @@ def main_worker(args):
             
         if epoch == args.epochs - 1:
             evaluators.append(R1_mAP_eval(len(dataset_msmt17.query), max_rank=50, feat_norm=True))
-            names.append("msmt17_norm")
+            names.append("msmt17")
             test_loaders.append(test_loader_msmt17)
             for evaluator, name, test_loader in zip(evaluators, names, test_loaders):
                 cmc, mAP_msmt = eval_func(epoch, evaluator, model, test_loader, name, old_model)
