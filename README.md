@@ -1,6 +1,30 @@
 # LReID-KRKC
 The code implementation of "Lifelong Person Re-Identification via Knowledge Refreshing and Knowledge Consolidation"
 ## Prepare Datasets
+```
+data
+├── market1501
+│   │── bounding_box_test
+│   │   └── images
+│   └── *.txt
+├── cuhksysu4reid
+│   │── class_name
+│   │   └── images
+│   └── *.txt
+├── MSMT17
+│   │── class_name
+│   │   └── images
+│   └── *.txt
+├── viper
+│   │── VIPeR
+│   │   │── class_name
+│   │   │   └── images
+│   │   └── *.txt 
+│   └── validation
+│       │── class_name
+│       │   └── images
+│       └── *.txt 
+```
 $ROOT/LReID-KRKC  
 $ROOT/data  
 ├── market1501  
