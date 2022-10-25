@@ -5,25 +5,21 @@ The code implementation of "Lifelong Person Re-Identification via Knowledge Refr
 data
 ├── market1501
 │   │── bounding_box_test
-│   │   └── images
-│   └── *.txt
+│   │── bounding_box_train
+│   └── ...
 ├── cuhksysu4reid
-│   │── class_name
-│   │   └── images
-│   └── *.txt
+│   │── combine
+│   │── gallery
+│   └── ...
 ├── MSMT17
-│   │── class_name
-│   │   └── images
-│   └── *.txt
+│   │── test
+│   │── train
+│   └── ...
 ├── viper
 │   │── VIPeR
-│   │   │── class_name
-│   │   │   └── images
-│   │   └── *.txt 
-│   └── validation
-│       │── class_name
-│       │   └── images
-│       └── *.txt 
+│   │   │── cam_a
+│   │   └── cam_b 
+│   └── splits.json
 ```
 $ROOT/LReID-KRKC  
 $ROOT/data  
