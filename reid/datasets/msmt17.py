@@ -27,7 +27,7 @@ def _pluck_msmt(list_file, subdir, pattern=re.compile(r'([-\d]+)_([-\d]+)_([-\d]
 
 class Dataset_MSMT(object):
     def __init__(self, root):
-        dataset_dir = root
+        dataset_dir = root[:-6]
         self.root = dataset_dir
         self.train, self.val, self.trainval = [], [], []
         self.query, self.gallery = [], []

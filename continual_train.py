@@ -25,7 +25,10 @@ import copy
 
 
 def get_data(name, data_dir, height, width, batch_size, workers, num_instances):
-    root = osp.join(data_dir, name)
+    if name == "cuhk_sysu":
+        root = osp.join(data_dir, "cuhksysu4reid")
+    else:
+        root = osp.join(data_dir, name)
 
     dataset = datasets.create(name, root)
 
@@ -133,7 +136,7 @@ def main_worker(args):
         get_data('msmt17', args.data_dir, args.height, args.width, args.batch_size, args.workers, args.num_instances)
    
     # Create model
-    model = build_resnet_backbone(num_class=num_classes_viper, depth='50x', root=args.data_dir)
+    model = build_resnet_backbone(num_class=num_classes_viper, depth='50x', root=args.data_dir[:-5])
     model.cuda()
     model = DataParallel(model)
 
@@ -435,7 +438,7 @@ if __name__ == '__main__':
     # path
     working_dir = osp.dirname(osp.abspath(__file__))
     parser.add_argument('--data-dir', type=str, metavar='PATH',
-                        default=osp.join('/$ROOT/', 'data'))
+                        default=osp.join('$ROOT', 'data'))
     parser.add_argument('--logs-dir', type=str, metavar='PATH',
                         default=osp.join(working_dir, 'logs'))
     parser.add_argument('--rr-gpu', action='store_true',

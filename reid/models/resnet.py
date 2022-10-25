@@ -3,7 +3,6 @@ import math
 
 from reid.models.gem_pool import GeneralizedMeanPoolingP
 from reid.models.layers import *
-from reid.utils.my_tools import get_pseudo_features
 logger = logging.getLogger(__name__)
 model_urls = {
     '50x': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
@@ -208,7 +207,7 @@ def build_resnet_backbone(num_class, depth, root, pretrain=True):
 
     model = ResNet(1, 'BN', False, False, block, num_class, num_blocks_per_stage)
     if pretrain:
-        cached_file = '/{}/.cache/torch/checkpoints/resnet50-19c8e357.pth'.format(root)
+        cached_file = '{}/.cache/torch/checkpoints/resnet50-19c8e357.pth'.format(root)
         state_dict = torch.load(cached_file)
         model.load_state_dict(state_dict, strict=False)
 
