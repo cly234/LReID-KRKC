@@ -1,5 +1,5 @@
 # Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation
-Implementation for AAAI2023 paper "Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation"
+Implementation for AAAI2023 paper "Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation" by Chunlin Yu, Ye Shi, Zimo Liu, Shenghua Gao, Jingya Wang*
 ## Prepare Datasets
 ```
 $ROOT
@@ -26,3 +26,4 @@ $ROOT
 ## Run the Code
 CUDA_VISBILE_DEVICES=0,1,2,3 python continual_train.py --data-dir=$ROOT
 
+##Acknowledgements
