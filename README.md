@@ -1,5 +1,5 @@
-# LReID-KRKC
-The code implementation of "Lifelong Person Re-Identification via Knowledge Refreshing and Knowledge Consolidation"
+# Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation
+Implementation for AAAI2023 paper "Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation"
 ## Prepare Datasets
 ```
 $ROOT
