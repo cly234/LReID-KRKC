@@ -1,5 +1,5 @@
-# Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation
-Implementation for AAAI2023 paper "Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation" by Chunlin Yu, Ye Shi, Zimo Liu, Shenghua Gao, Jingya Wang*
+# [AAAI2023] Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation
+Implementation for AAAI2023 "Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation" by Chunlin Yu, Ye Shi, Zimo Liu, Shenghua Gao, Jingya Wang*
 ## Prepare Datasets
 ```
 $ROOT
