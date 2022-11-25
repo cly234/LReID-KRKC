@@ -26,4 +26,5 @@ $ROOT
 ## Run the Code
 CUDA_VISBILE_DEVICES=0,1,2,3 python continual_train.py --data-dir=$ROOT
 
-##Acknowledgements
+## Acknowledgement
+The code framework is based on [PTKP](https://github.com/g3956/PTKP)
