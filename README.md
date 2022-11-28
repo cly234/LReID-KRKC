@@ -4,7 +4,7 @@ The official implementation of AAAI 2023 paper "Lifelong Person Re-Identificatio
 ![](./KRKC_fig.png)
 ## Getting Started
 ### Data preparation
-The dataset structure
+The dataset structure is shown as follows.
 ```
 data
 ├── market1501
