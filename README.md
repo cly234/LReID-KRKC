@@ -4,7 +4,7 @@ The official implementation of AAAI 2023 paper "Lifelong Person Re-Identificatio
 ![](./docs/KRKC_fig.png)
 ## Getting Started
 ### Dataset preparation
-- Prepare the dataset structure as follows.
+- Prepare the dataset structure as in [here](https://github.com/cly234/LReID-KRKC/blob/main/docs/dataset_structure.md).
 - Move docs/splits.json file into directory /path/to/your/dataset/viper.
 - Covert CUHK-SYSU to cuhksysu4reid following instructions in this [repo](https://github.com/TPCD/LifelongReID).
 ```
