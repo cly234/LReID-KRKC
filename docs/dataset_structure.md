@@ -1,4 +1,4 @@
-The file structure of the datasets.
+The file structure of the datasets for training is shown as below.
 ```
 /path/to/your/dataset
 ├── market1501
