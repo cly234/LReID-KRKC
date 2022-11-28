@@ -1,4 +1,4 @@
-
+The file structure of the datasets.
 ```
 /path/to/your/dataset
 ├── market1501
