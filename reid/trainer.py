@@ -24,14 +24,9 @@ class Trainer(object):
             old_model.train()
         batch_time = AverageMeter()
         data_time = AverageMeter()
-        losses_ce = AverageMeter()
-        losses_tr = AverageMeter()
-        losses_tr_r = AverageMeter()
-        losses_kd_r = AverageMeter()
-        #losses_DCL = AverageMeter()
-        #losses_PT_ID = AverageMeter()
-        #losses_PT_KD = AverageMeter()
-
+        losses_rehearsal = AverageMeter()
+        losses_refresh = AverageMeter()
+        
         end = time.time()
 
         for i in range(train_iters):
@@ -39,45 +34,49 @@ class Trainer(object):
             train_inputs = data_loader_train.next()
             data_time.update(time.time() - end)
 
-            s_inputs, targets, cids, domains = self._parse_data(train_inputs)
+            imgs, targets, cids, domains = self._parse_data(train_inputs)
             targets += add_num
             
-            s_features, bn_features, s_cls_out = self.model(s_inputs, domains, training_phase)
-            loss_ce, loss_tp = self._forward(s_features, s_cls_out, targets)
+            features, bn_features, cls_out = self.model(imgs, domains, training_phase)
+            loss_ce, loss_tp = self._forward(features, cls_out, targets)
 
             losses_ce.update(loss_ce.item())
             losses_tr.update(loss_tp.item())
 
-            loss = loss_ce + loss_tp
+            loss_rehearsal = loss_ce + loss_tp
 
             if replay is True:
                 imgs_r, fnames_r, pid_r, cid_r, domain_r = next(iter(data_loader_replay))
                 imgs_r = imgs_r.cuda()
                 pid_r = pid_r.cuda()
 
-                features_r, bn_features_r, cls_out_r = \
-                    self.model(imgs_r, domain_r, training_phase)
+                features_r, bn_features_r, cls_out_r = self.model(imgs_r, domain_r, training_phase)
 
                 loss_tr_r = self.trip_hard(features_r, pid_r)[0] 
 
-                loss += loss_tr_r 
+                loss_rehearsal += loss_tr_r 
 
-                s_features_old, bn_features_old, s_cls_out_old = old_model(s_inputs, domains, training_phase)
-                features_r_old, bn_features_r_old, cls_out_r_old = old_model(imgs_r, domain_r, training_phase,fkd=True)
-                KD_loss_r = self.criterion_ce(s_cls_out_old, targets) + self.criterion_triple(s_features_old, s_features_old, targets) + self.trip_hard(features_r_old, pid_r)[0] 
+                features_old, bn_features_old, cls_out_old = old_model(imgs, domains, training_phase)
+                features_r_old, bn_features_r_old, cls_out_r_old = old_model(imgs_r, domain_r, training_phase)
+                
+                loss_memo = self.criterion_ce(cls_out_old, targets) + self.criterion_triple(features_old, features_old, targets) + self.trip_hard(features_r_old, pid_r)[0] 
+                loss_cali= self.loss_kd_js(cls_out, cls_out_old)
+                loss_refresh = loss_memo + loss_cali
 
-                KD_loss_r += self.loss_kd_js(s_cls_out, s_cls_out_old)
-               
+                losses_refresh.update(loss_refresh)
+
                 old_optimizer.zero_grad()
-                KD_loss_r.backward()
+                loss_refresh.backward()
                 old_optimizer.step()
                 del bn_features, bn_features_old
                 
-                loss += self.loss_kd_js(s_cls_out_old, s_cls_out)
-                del s_cls_out_old, s_cls_out, cls_out_r_old, cls_out_r, bn_features_r, bn_features_r_old, s_features_old, s_features
+                loss_rehearsal += self.loss_kd_js(cls_out_old, cls_out)
+                del cls_out_old, cls_out, cls_out_r_old, cls_out_r, bn_features_r, bn_features_r_old, features_old, features
+            
+            losses_rehearsal.update(loss_rehearsal)
             
             optimizer.zero_grad()
-            loss.backward()
+            loss_rehearsal.backward()
             optimizer.step()
 
             batch_time.update(time.time() - end)
@@ -85,14 +84,12 @@ class Trainer(object):
             if (i + 1) == train_iters or (i + 1)%(train_iters//4)==0:
                 print('Epoch: [{}][{}/{}]\t'
                       'Time {:.3f} ({:.3f})\t'
-                      'Loss_ce {:.3f} ({:.3f})\t'
-                      'Loss_tp {:.3f} ({:.3f})\t'
-                      'Loss_sce {:.3f} ({:.3f})\t'
+                      'Loss_rehearsal {:.3f} ({:.3f})\t'
+                      'Loss_refresh {:.3f} ({:.3f})\t'
                       .format(epoch, i + 1, train_iters,
                               batch_time.val, batch_time.avg,
-                              losses_ce.val, losses_ce.avg,
-                              losses_tr.val, losses_tr.avg,
-                              losses_kd_r.val, losses_kd_r.avg))
+                              losses_rehearsal.val, losses_rehearsal.avg,
+                              losses_refresh.val, losses_refresh.avg))
 
     def _parse_data(self, inputs):
         imgs, _, pids, cids, domains = inputs

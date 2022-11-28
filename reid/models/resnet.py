@@ -108,13 +108,6 @@ class ResNet(nn.Module):
         self.classifier = MetaLinear(512*block.expansion, num_class, bias=False)
         nn.init.normal_(self.classifier.weight, std=0.001)
 
-        #self.task_specific_batch_norm = nn.ModuleList(MetaBatchNorm2d(512*block.expansion) for _ in range(4))
-
-        #for bn in self.task_specific_batch_norm:
-            #bn.bias.requires_grad_(False)
-            #nn.init.constant_(bn.weight, 1)
-            #nn.init.constant_(bn.bias, 0)
-
         self.random_init()
 
     def _make_layer(self, block, planes, blocks, stride=1, bn_norm="BN", with_ibn=False, with_se=False):
@@ -134,7 +127,7 @@ class ResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x, domains=None, training_phase=None, disti=False, fkd=False):
+    def forward(self, x, domains=None, training_phase=None, fkd=False):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -160,8 +153,6 @@ class ResNet(nn.Module):
 
         bn_feat = bn_feat[..., 0, 0]
         cls_outputs = self.classifier(bn_feat)
-
-        #fake_feat_list = get_pseudo_features(self.task_specific_batch_norm, training_phase, global_feat, domains)
 
         return global_feat[..., 0, 0], bn_feat, cls_outputs
 
