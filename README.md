@@ -1,11 +1,12 @@
 # [AAAI2023] Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation
 The official implementation of AAAI 2023 paper "Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation" by Chunlin Yu, Ye Shi, Zimo Liu, Shenghua Gao, Jingya Wang*
 ## Method Overview
-![](./KRKC_fig.png)
+![](./docs/KRKC_fig.png)
 ## Getting Started
 ### Data preparation
 - Prepare the dataset structure as follows
-- move doc/splits.json file under directory /path/to/your/dataset/viper 
+- Move docs/splits.json file into directory /path/to/your/dataset/viper
+- Obtain cuhksysu4reid dataset from this [repo](https://github.com/TPCD/LifelongReID)
 ```
 /path/to/your/dataset
 ├── market1501
