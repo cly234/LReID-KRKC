@@ -27,9 +27,15 @@ The official implementation of AAAI 2023 paper "Lifelong Person Re-Identificatio
 │   │   └── cam_b 
 │   └── splits.json
 ```  	
-### Run the Code
+### Training
+```
 CUDA_VISBILE_DEVICES=0,1,2,3 python continual_train.py --data-dir=/path/to/your/dataset.
+```
 
+### Evaluation
+```
+python evaluate.py --data-dir=/path/to/your/dataset --resume-working=/path/to/working/checkpoints --resume-memory=/path/to/memory/checkpoints
+```
 ## Acknowledgement
 - The code framework is based on [PTKP](https://github.com/g3956/PTKP) and [AKA](https://github.com/TPCD/LifelongReID).
 - The code for efficient evaluation is borrowed from [TransReID](https://github.com/damo-cv/TransReID).
