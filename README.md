@@ -4,9 +4,10 @@ The official implementation of AAAI 2023 paper "Lifelong Person Re-Identificatio
 ![](./KRKC_fig.png)
 ## Getting Started
 ### Data preparation
-The dataset structure is shown as follows.
+- Prepare the dataset structure as follows
+- move doc/splits.json file under directory /path/to/your/dataset/viper 
 ```
-data
+/path/to/your/dataset
 ├── market1501
 │   │── bounding_box_test
 │   │── bounding_box_train
