@@ -9,7 +9,7 @@ The official implementation of AAAI 2023 paper "Lifelong Person Re-Identificatio
 - Covert CUHK-SYSU to cuhksysu4reid following instructions in this [repo](https://github.com/TPCD/LifelongReID).
 ### Training
 ```
-CUDA_VISBILE_DEVICES=0,1,2,3 python continual_train.py --data-dir=/path/to/your/dataset.
+CUDA_VISBILE_DEVICES=0,1,2,3 python continual_train.py --data-dir=/path/to/your/dataset
 ```
 
 ### Evaluation
