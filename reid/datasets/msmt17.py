@@ -36,7 +36,7 @@ class Dataset_MSMT(object):
     def images_dir(self):
         return self.root
 
-    def load(self, verbo  se=True):
+    def load(self, verbose=True):
         exdir = self.root
         self.train, train_pids = _pluck_msmt(osp.join(exdir, 'list_train.txt'), 'train')
         self.val, val_pids = _pluck_msmt(osp.join(exdir, 'list_val.txt'), 'train')

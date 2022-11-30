@@ -135,8 +135,8 @@ def eval_func(epoch, evaluator, model, test_loader, name, old_model=None, use_fs
         for r in [1, 5, 10]:
             print("CMC curve, Rank-{:<3}:{:.1%}".format(r, cmc[r - 1]))
         torch.cuda.empty_cache()
-
-        return mAP
+    
+        return cmc, mAP
 
     if old_model is not None:
         print("Validation Results - Epoch: {}".format(epoch))
@@ -145,5 +145,5 @@ def eval_func(epoch, evaluator, model, test_loader, name, old_model=None, use_fs
             print("CMC curve, Rank-{:<3}:{:.1%}".format(r, cmc_fuse[r - 1]))
         torch.cuda.empty_cache()
 
-        return mAP, mAP_old, mAP_fuse
+        return cmc, mAP, mAP_old, mAP_fuse
     

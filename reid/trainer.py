@@ -40,9 +40,6 @@ class Trainer(object):
             features, bn_features, cls_out = self.model(imgs, domains, training_phase)
             loss_ce, loss_tp = self._forward(features, cls_out, targets)
 
-            losses_ce.update(loss_ce.item())
-            losses_tr.update(loss_tp.item())
-
             loss_rehearsal = loss_ce + loss_tp
 
             if replay is True:

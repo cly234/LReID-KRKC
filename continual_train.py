@@ -82,14 +82,14 @@ def main_worker(args):
 
     # Train VIPeR
     trainer = Trainer(model, num_classes_viper, margin=args.margin)
-    for epoch in range(start_epoch, 60):
+    for epoch in range(start_epoch, args.epochs):
 
         train_loader_viper.new_epoch()
         trainer.train(epoch, train_loader_viper, None, optimizer, old_optimizer=None, training_phase=1,
                       train_iters=150, add_num=0, old_model=None, replay=False)
         lr_scheduler.step()
 
-        if ((epoch + 1) % 60 == 0):
+        if (epoch == args.epochs - 1):
             for evaluator, name, test_loader in zip(evaluators, names, test_loaders):
                 cmc, mAP_viper = eval_func(epoch, evaluator, model, test_loader, name, old_model=None, use_fsc=False)
 
@@ -360,7 +360,7 @@ if __name__ == '__main__':
     parser.add_argument('--resume', type=str, default='', metavar='PATH')
     parser.add_argument('--evaluate', action='store_true',
                         help="evaluation only")
-    parser.add_argument('--epochs', type=int, default=60)
+    parser.add_argument('--epochs', type=int, default=1)
     parser.add_argument('--iters', type=int, default=200)
     parser.add_argument('--seed', type=int, default=1)
     parser.add_argument('--print-freq', type=int, default=200)

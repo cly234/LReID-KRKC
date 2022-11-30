@@ -1,31 +1,32 @@
 from __future__ import absolute_import
 import warnings
 
-from .dukemtmc import DukeMTMC
 from .market1501 import Market1501
 from .msmt17 import MSMT17
 from .cuhk03 import CUHK03
 from .cuhk01 import CUHK01
 from .cuhk_sysu import CUHK_SYSU
-from .grid import GRID
-from .sensereid import SenseReID
 from .viper import VIPeR
 from .prid import PRID
 from .cuhk02 import CUHK02
+
+import os.path as osp
+from reid.utils.data.preprocessor import Preprocessor
+from reid.utils.data import transforms as T
+from torch.utils.data import DataLoader
+from reid.utils.data import IterLoader
+from reid.utils.data.sampler import RandomIdentitySampler, RandomMultipleGallerySampler
+
 __factory = {
     'market1501': Market1501,
-    'dukemtmc': DukeMTMC,
     'msmt17': MSMT17,
     'cuhk_sysu': CUHK_SYSU,
     'cuhk03': CUHK03,
     'cuhk01': CUHK01,
-    'grid': GRID,
-    'sense': SenseReID,
     'viper': VIPeR,
     'prid': PRID,
     'cuhk02': CUHK02
 }
-
 
 def names():
     return sorted(__factory.keys())
@@ -61,6 +62,8 @@ def get_dataset(name, root, *args, **kwargs):
 def get_data(name, data_dir, height, width, batch_size, workers, num_instances):
     if name == "cuhk_sysu":
         root = osp.join(data_dir, "cuhksysu4reid")
+    elif name == "msmt17":
+        root = osp.join(data_dir, "MSMT17")
     else:
         root = osp.join(data_dir, name)
 
