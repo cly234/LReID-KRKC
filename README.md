@@ -5,6 +5,13 @@ The official implementation of AAAI 2023 paper "Lifelong Person Re-Identificatio
 ## Introduction
 ![](./docs/KRKC_fig.png)
 ## Getting Started
+### Requirements
+- Python 3.6+
+- Pytorch 1.9.0
+- For more detailed requirements, run
+```
+pip install -r requirements.txt
+```
 ### Dataset preparation
 - Prepare the dataset structure as in [here](https://github.com/cly234/LReID-KRKC/blob/main/docs/dataset_structure.md).
 - Move docs/splits.json file into directory /path/to/your/dataset/viper.
