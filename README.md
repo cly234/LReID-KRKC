@@ -25,7 +25,6 @@ We provide the checkpints of working model and memory model trained after the la
 - The code for efficient evaluation is borrowed from [TransReID](https://github.com/damo-cv/TransReID).
 
 ## Cite this work
-If you find our work / code implementation useful for your own research, please cite our paper.
 ```
 @article{yu2022lifelong,
   title={Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation},
