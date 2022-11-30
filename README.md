@@ -26,3 +26,11 @@ We provide the checkpints of working model and memory model trained after the la
 
 ## Cite this work
 If you find our work / code implementation useful for your own research, please cite our paper.
+```
+@misc{2211.16201,
+Author = {Chunlin Yu and Ye Shi and Zimo Liu and Shenghua Gao and Jingya Wang},
+Title = {Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation},
+Year = {2022},
+Eprint = {arXiv:2211.16201},
+}
+```
