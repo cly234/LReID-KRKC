@@ -99,7 +99,7 @@ def main_worker(args):
 
     # Start evaluating
     for evaluator, name, test_loader in zip(evaluators, names, test_loaders):
-        cmc, mAP_msmt = eval_func(epoch, evaluator, model, test_loader, name, old_model)
+        eval_func(epoch, evaluator, model, test_loader, name, old_model)
 
     print('finished')
 
