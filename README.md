@@ -1,5 +1,5 @@
 # [AAAI2023] Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation
-The official implementation of AAAI 2023 paper "[\[Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation\]](https://arxiv.org/abs/2211.16201)" by Chunlin Yu, Ye Shi, Zimo Liu, Shenghua Gao, Jingya Wang*
+The official implementation of AAAI 2023 paper "[Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation](https://arxiv.org/abs/2211.16201)" by Chunlin Yu, Ye Shi, Zimo Liu, Shenghua Gao, Jingya Wang*
 
 ## Introduction
 ![](./docs/KRKC_fig.png)
