@@ -30,7 +30,7 @@ We provide the checkpoints of working model and memory model trained after the l
 ## Acknowledgement
 - The code framework is based on [PTKP](https://github.com/g3956/PTKP) and [AKA](https://github.com/TPCD/LifelongReID).
 - The code for efficient evaluation is borrowed from [TransReID](https://github.com/damo-cv/TransReID).
-
+Thanks to these great code bases!
 ## Cite this work
 ```
 @article{yu2022lifelong,
