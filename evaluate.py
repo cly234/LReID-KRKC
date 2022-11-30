@@ -85,17 +85,13 @@ def main_worker(args):
     if args.resume_working:
         working_checkpoint = load_checkpoint(args.resume_working)
         copy_state_dict(working_checkpoint['state_dict'], model)
-        epoch = working_checkpoint['epoch']
-        mAP = working_checkpoint['mAP']
-        print("=> Start epoch {}  best mAP {:.1%}".format(epoch, mAP))
     
     if args.resume_memory:
         memory_checkpoint = load_checkpoint(args.resume_memory)
         copy_state_dict(memory_checkpoint['state_dict'], old_model)
-        epoch = memory_checkpoint['epoch']
-        mAP = memory_checkpoint['mAP']
-        print("=> Start epoch {}  best mAP {:.1%}".format(epoch, mAP))
 
+    epoch = working_checkpoint['epoch']
+    
     # Setup evaluators
     names = ['viper', 'market', 'cuhksysu', 'msmt17']
     evaluators = [R1_mAP_eval(len(dataset_viper.query), max_rank=50, feat_norm=True), R1_mAP_eval(len(dataset_market.query), max_rank=50, feat_norm=True), R1_mAP_eval(len(dataset_cuhksysu.query), max_rank=50, feat_norm=True), R1_mAP_eval(len(dataset_msmt17.query), max_rank=50, feat_norm=True)]
@@ -104,6 +100,7 @@ def main_worker(args):
     # Start evaluating
     for evaluator, name, test_loader in zip(evaluators, names, test_loaders):
         cmc, mAP_msmt = eval_func(epoch, evaluator, model, test_loader, name, old_model)
+
     print('finished')
 
 
@@ -132,8 +129,8 @@ if __name__ == '__main__':
     parser.add_argument('--milestones', nargs='+', type=int, default=[40, 70],
                         help='milestones for the learning rate decay')
     # training configs
-    parser.add_argument('--resume_work', type=str, default='/public/home/yuchl/checkpoints/working_checkpoint_step_4.pth.tar', metavar='PATH')
-    parser.add_argument('--resume_mem', type=str, default='/public/home/yuchl/checkpoints/memory_checkpoint_step_4.pth.tar', metavar='PATH')
+    parser.add_argument('--resume-working', type=str, default='/public/home/yuchl/checkpoints/working_checkpoint_step_4.pth.tar', metavar='PATH')
+    parser.add_argument('--resume-memory', type=str, default='/public/home/yuchl/checkpoints/memory_checkpoint_step_4.pth.tar', metavar='PATH')
     parser.add_argument('--evaluate', action='store_true',
                         help="evaluation only")
     parser.add_argument('--epochs', type=int, default=60)
