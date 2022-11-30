@@ -19,7 +19,7 @@ CUDA_VISBILE_DEVICES=0,1,2,3 python continual_train.py --data-dir=/path/to/your/
 python evaluate.py --data-dir=/path/to/your/dataset --resume-working=/path/to/working/checkpoints --resume-memory=/path/to/memory/checkpoints
 ```
 ### Checkpoints
-We provide the checkpoints of working model and memory model trained after the last step in [Google Drive]().
+We provide the checkpoints of working model and memory model trained after the last step in [Google Drive](https://drive.google.com/drive/folders/1rDFTr7jsLrxnMMFL54meB03CkXu5Yh63?usp=sharing).
 ## Acknowledgement
 - The code framework is based on [PTKP](https://github.com/g3956/PTKP) and [AKA](https://github.com/TPCD/LifelongReID).
 - The code for efficient evaluation is borrowed from [TransReID](https://github.com/damo-cv/TransReID).
