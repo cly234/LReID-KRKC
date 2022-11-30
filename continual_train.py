@@ -8,7 +8,7 @@ import copy
 import torch.nn as nn
 import random
 
-from reid import datasets
+from reid.datasets import get_data
 from reid.utils.metrics import R1_mAP_eval
 from reid.utils.data import IterLoader
 from reid.utils.data.sampler import RandomMultipleGallerySampler
@@ -22,83 +22,6 @@ from reid.trainer import Trainer
 from torch.nn.parallel import DistributedDataParallel
 import copy
 
-
-
-def get_data(name, data_dir, height, width, batch_size, workers, num_instances):
-    if name == "cuhk_sysu":
-        root = osp.join(data_dir, "cuhksysu4reid")
-    else:
-        root = osp.join(data_dir, name)
-
-    dataset = datasets.create(name, root)
-
-    normalizer = T.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225])
-
-    train_set = sorted(dataset.train)
-
-    iters = int(len(train_set) / batch_size)
-    num_classes = dataset.num_train_pids
-
-    train_transformer = T.Compose([
-        T.Resize((height, width), interpolation=3),
-        T.RandomHorizontalFlip(p=0.5),
-        T.Pad(10),
-        T.RandomCrop((height, width)),
-        T.ToTensor(),
-        normalizer,
-        T.RandomErasing(probability=0.5, mean=[0.485, 0.456, 0.406])
-    ])
-
-    test_transformer = T.Compose([
-        T.Resize((height, width), interpolation=3),
-        T.ToTensor(),
-        normalizer
-    ])
-
-    rmgs_flag = num_instances > 0
-    if rmgs_flag:
-        sampler = RandomMultipleGallerySampler(train_set, num_instances)
-    else:
-        sampler = None
-
-    train_loader = IterLoader(
-        DataLoader(Preprocessor(train_set, root=dataset.images_dir,transform=train_transformer),
-                   batch_size=batch_size, num_workers=workers, sampler=sampler,
-                   shuffle=not rmgs_flag, pin_memory=True, drop_last=True), length=iters)
-
-    test_loader = DataLoader(
-        Preprocessor(list(dataset.query + dataset.gallery),
-                     root=dataset.images_dir, transform=test_transformer),
-        batch_size=batch_size, num_workers=workers, shuffle=False, pin_memory=True)
-
-    init_loader = DataLoader(Preprocessor(train_set, root=dataset.images_dir,transform=test_transformer),
-                             batch_size=batch_size, num_workers=workers,shuffle=False, pin_memory=True, drop_last=False)
-
-    return dataset, num_classes, train_loader, test_loader, init_loader
-
-
-def get_test_loader(dataset, height, width, batch_size, workers, testset=None):
-    normalizer = T.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225])
-
-    test_transformer = T.Compose([
-        T.Resize((height, width), interpolation=3),
-        T.ToTensor(),
-        normalizer
-    ])
-
-    if (testset is None):
-        testset = list(set(dataset.query) | set(dataset.gallery))
-
-    test_loader = DataLoader(
-        Preprocessor(testset, root=dataset.images_dir, transform=test_transformer),
-        batch_size=batch_size, num_workers=workers,
-        shuffle=False, pin_memory=True)
-
-    return test_loader
-
-
 def main():
     args = parser.parse_args()
 
@@ -109,7 +32,6 @@ def main():
         cudnn.deterministic = True
 
     main_worker(args)
-
 
 def main_worker(args):
 
@@ -136,7 +58,7 @@ def main_worker(args):
         get_data('msmt17', args.data_dir, args.height, args.width, args.batch_size, args.workers, args.num_instances)
    
     # Create model
-    model = build_resnet_backbone(num_class=num_classes_viper, depth='50x', root=args.data_dir[:-5])
+    model = build_resnet_backbone(num_class=num_classes_viper, depth='50x')
     model.cuda()
     model = DataParallel(model)
 
@@ -169,13 +91,13 @@ def main_worker(args):
 
         if ((epoch + 1) % 60 == 0):
             for evaluator, name, test_loader in zip(evaluators, names, test_loaders):
-                cmc, mAP_viper = eval_func(epoch, evaluator, model, test_loader, name, old_model=None)
+                cmc, mAP_viper = eval_func(epoch, evaluator, model, test_loader, name, old_model=None, use_fsc=False)
 
             save_checkpoint({
                 'state_dict': model.state_dict(),
                 'epoch': epoch + 1,
                 'mAP': mAP_viper,
-            }, True, fpath=osp.join(args.logs_dir, 'viper_checkpoint.pth.tar'))
+            }, True, fpath=osp.join(args.logs_dir, 'working_checkpoint_step_1.pth.tar'))
 
             print('Finished epoch {:3d}  VIPeR mAP: {:5.1%} '.format(epoch, mAP_viper))
     # Select replay data of viper
@@ -233,13 +155,13 @@ def main_worker(args):
 
         if (epoch == args.epochs-1):
             for evaluator, name, test_loader in zip(evaluators, names, test_loaders):
-                cmc, mAP_market = eval_func(epoch, evaluator, model, test_loader, name, old_model)
+                cmc, mAP_market, _ , _ = eval_func(epoch, evaluator, model, test_loader, name, old_model)
 
             save_checkpoint({
                 'state_dict': model.state_dict(),
                 'epoch': epoch + 1,
                 'mAP': mAP_market,
-                }, True, fpath=osp.join(args.logs_dir, 'market_checkpoint.pth.tar'))
+                }, True, fpath=osp.join(args.logs_dir, 'working_checkpoint_step_2.pth.tar'))
 
     # Select replay data of market-1501
     replay_dataloader, market_replay_dataset = select_replay_samples(model, dataset_market, training_phase=2,
@@ -309,15 +231,16 @@ def main_worker(args):
             test_loaders.append(test_loader_cuhksysu) 
             evaluators.append(R1_mAP_eval(len(dataset_cuhksysu.query), max_rank=50, feat_norm=True))
             names.append('cuhksysu')
+
             for evaluator, name, test_loader in zip(evaluators, names, test_loaders):
-                cmc, mAP_cuhk = eval_func(epoch, evaluator, model, test_loader, name, old_model)
+                cmc, mAP_cuhk, mAP_cuhk_old, _ = eval_func(epoch, evaluator, model, test_loader, name, old_model)
             
             if epoch == args.epochs - 1:
                 save_checkpoint({
                     'state_dict': model.state_dict(),
                     'epoch': epoch + 1,
                     'mAP': mAP_cuhk,
-                }, True, fpath=osp.join(args.logs_dir, 'cuhksysu_checkpoint.pth.tar'))
+                }, True, fpath=osp.join(args.logs_dir, 'working_checkpoint_step_3.pth.tar'))
 
             print('Finished epoch {:3d}  CUHKSYSU mAP: {:5.1%}'.format(epoch, mAP_cuhk))
     
@@ -389,13 +312,21 @@ def main_worker(args):
             evaluators.append(R1_mAP_eval(len(dataset_msmt17.query), max_rank=50, feat_norm=True))
             names.append("msmt17")
             test_loaders.append(test_loader_msmt17)
+
             for evaluator, name, test_loader in zip(evaluators, names, test_loaders):
-                cmc, mAP_msmt = eval_func(epoch, evaluator, model, test_loader, name, old_model)
+                cmc, mAP_msmt, mAP_msmt_old, _ = eval_func(epoch, evaluator, model, test_loader, name, old_model)
+
             save_checkpoint({
                 'state_dict': model.state_dict(),
                 'epoch': epoch + 1,
                 'mAP': mAP_msmt,
-            }, True, fpath=osp.join(args.logs_dir, 'msmt17_checkpoint.pth.tar'))
+            }, True, fpath=osp.join(args.logs_dir, 'working_checkpoint_step_4.pth.tar'))
+
+            save_checkpoint({
+                'state_dict': model.state_dict(),
+                'epoch': epoch + 1,
+                'mAP': mAP_msmt_old,
+            }, True, fpath=osp.join(args.logs_dir, 'memory_checkpoint_step_4.pth.tar'))
 
             print('Finished epoch {:3d}  MSMT17 mAP: {:5.1%}'.format(epoch, mAP_msmt))
     

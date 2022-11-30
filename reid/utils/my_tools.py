@@ -138,7 +138,6 @@ def eval_func(epoch, evaluator, model, test_loader, name, old_model=None, use_fs
 
         return mAP
 
-
     if old_model is not None:
         print("Validation Results - Epoch: {}".format(epoch))
         print("mAP_{}: {:.1%}".format(name+"_FSC", mAP_fuse))
