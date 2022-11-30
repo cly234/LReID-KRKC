@@ -177,9 +177,6 @@ def main_worker(args):
     
     model.load_state_dict(tmp_state_dict)
 
-    for evaluator, name, test_loader in zip(evaluators, names, test_loaders):
-        cmc, mAP_cuhk = eval_func(epoch, evaluator, model, test_loader, name, old_model)
-
     model = DataParallel(model)
 
     # Expand the dimension of classifier
@@ -257,9 +254,6 @@ def main_worker(args):
         tmp_state_dict[k] = alpha * model.state_dict()[k] + (1-alpha) * old_model.state_dict()[k]
     
     model.load_state_dict(tmp_state_dict)
-
-    for evaluator, name, test_loader in zip(evaluators, names, test_loaders):
-        cmc, mAP_cuhk = eval_func(epoch, evaluator, model, test_loader, name, old_model)
 
     model = DataParallel(model)
 
