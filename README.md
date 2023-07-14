@@ -1,4 +1,4 @@
-# [AAAI2023] Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation
+# [AAAI2023 Oral] Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation
 The official implementation of AAAI 2023 paper "[Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation](https://arxiv.org/abs/2211.16201)" by Chunlin Yu, Ye Shi, Zimo Liu, Shenghua Gao, Jingya Wang*
 
 ## Introduction
@@ -33,6 +33,7 @@ Thanks for all these great code bases:
 - The code framework is based on [PTKP](https://github.com/g3956/PTKP) and [AKA](https://github.com/TPCD/LifelongReID).
 - The code for efficient evaluation is borrowed from [TransReID](https://github.com/damo-cv/TransReID).
 ## Cite this work
+ If you find my project interesting or valuable, I would be grateful if you could consider giving it a star!
 ```
 @article{yu2022lifelong,
   title={Lifelong Person Re-Identification via Knowledge Refreshing and Consolidation},
